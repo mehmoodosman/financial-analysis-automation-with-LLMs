@@ -1,9 +1,9 @@
-# Stock Analysis Dashboard
-
+# Stock analysis
+Leveraging large language models (LLMs) to automate financial analysis. Performed RAG over a financial dataset, using LLMs to generate financial reports, scrape websites, and extract sentiment from news articles. By regenerating prompts, dynamically route models, and generate structured outputs.
 📈 A Streamlit application for analyzing stock data, providing insights into market trends, sector distributions, and more.
+![image](https://github.com/user-attachments/assets/a94b044c-cf98-4b64-90a6-270da7ee6849)
 
 ## Features
-
 - **Stock Search**: Search for stocks by description, sector, or characteristics.
 - **Stock Cards**: Display detailed information about each stock, including market cap, price, growth, and analyst recommendations.
 - **Sector Distribution**: Visualize the distribution of stocks across different sectors.
