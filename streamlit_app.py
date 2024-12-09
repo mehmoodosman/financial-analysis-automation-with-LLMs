@@ -1,19 +1,11 @@
-from langchain_pinecone import PineconeVectorStore
-from openai import OpenAI
-import yfinance as yf
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.schema import Document
-from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
-import numpy as np
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-from pinecone import Pinecone
-from sentence_transformers import SentenceTransformer
+import yfinance as yf
 from groq import Groq
 
 # Set Streamlit page configuration
