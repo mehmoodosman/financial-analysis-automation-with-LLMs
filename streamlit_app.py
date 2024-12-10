@@ -177,12 +177,12 @@ pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 pinecone_index = pc.Index("stocks")
 sentence_model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 
-st.title("Stock Analysis")
+st.title("Ticker Analysis")
 
-user_query = st.text_input("Search for stocks by description, sector, or characteristics:")
+user_query = st.text_input("Search for tickers by description, sector, or characteristics:")
 
-if st.button("🚀 Find Stocks", type="primary"):
-    with st.spinner("Analyzing stocks..."):
+if st.button("🚀 Find Tickers", type="primary"):
+    with st.spinner("Analyzing tickers..."):
         # Directly use the user query without enhancement
         query_embedding = get_huggingface_embeddings(user_query)
         search_results = pinecone_index.query(
