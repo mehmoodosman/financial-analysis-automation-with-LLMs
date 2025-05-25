@@ -7,45 +7,26 @@ import plotly.graph_objects as go
 from datetime import datetime
 import yfinance as yf
 from groq import Groq
-import time
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Set Streamlit page configuration
 st.set_page_config(layout="wide", page_title="Stock Analysis", page_icon="📈")
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def fetch_stock_data(ticker):
-    try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        return {
-            "name": info.get("shortName", "N/A"),
-            "summary": info.get("longBusinessSummary", "N/A"),
-            "sector": info.get("sector", "N/A"),
-            "industry": info.get("industry", "N/A"),
-            "market_cap": info.get("marketCap", "N/A"),
-            "price": info.get("currentPrice", "N/A"),
-            "revenue_growth": info.get("revenueGrowth", "N/A"),
-            "recommendation": info.get("recommendationKey", "N/A"),
-            "country": info.get("country", "N/A"),
-            "beta": info.get("beta", "N/A"),
-            "dividend_yield": info.get("dividendYield", "N/A")
-        }
-    except Exception as e:
-        st.warning(f"Error fetching data for {ticker}: {str(e)}")
-        return {
-            "name": ticker,
-            "summary": "Data unavailable",
-            "sector": "N/A",
-            "industry": "N/A",
-            "market_cap": "N/A",
-            "price": "N/A",
-            "revenue_growth": "N/A",
-            "recommendation": "N/A",
-            "country": "N/A",
-            "beta": "N/A",
-            "dividend_yield": "N/A"
-        }
+    stock = yf.Ticker(ticker)
+    info = stock.info
+    return {
+        "name": info.get("shortName", "N/A"),
+        "summary": info.get("longBusinessSummary", "N/A"),
+        "sector": info.get("sector", "N/A"),
+        "industry": info.get("industry", "N/A"),
+        "market_cap": info.get("marketCap", "N/A"),
+        "price": info.get("currentPrice", "N/A"),
+        "revenue_growth": info.get("revenueGrowth", "N/A"),
+        "recommendation": info.get("recommendationKey", "N/A"),
+        "country": info.get("country", "N/A"),
+        "beta": info.get("beta", "N/A"),
+        "dividend_yield": info.get("dividendYield", "N/A")
+    }
 
 def format_large_number(num):
     if num == "N/A":
