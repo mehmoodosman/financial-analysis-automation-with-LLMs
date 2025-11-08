@@ -1,7 +1,9 @@
 # Stock analysis 📈
+
 Streamlit application leveraging large language models (LLMs) to automate financial analysis. Performed RAG over a financial dataset, using LLMs to generate financial reports, scrape websites, and extract sentiment from news articles. By regenerating prompts, dynamically route models, and generate structured outputs.
 
-### Asynchronous/Parallel Programming architecture to load 9998 stock tickers with their relevant metadata from yfinance to Pinecone Index 
+### Asynchronous/Parallel Programming architecture to load 9998 stock tickers with their relevant metadata from yfinance to Pinecone Index
+
 ![image](https://github.com/user-attachments/assets/a94b044c-cf98-4b64-90a6-270da7ee6849)
 
 ## Features
@@ -14,6 +16,59 @@ Streamlit application leveraging large language models (LLMs) to automate financ
 - **AI Analysis**: Get AI-generated insights and analysis on selected stocks.
 - **Geographic Distribution**: View the geographic distribution of companies.
 - **Beta and Dividend Yield Comparison**: Compare beta values and dividend yields of stocks.
+
+## Local Setup
+
+### Prerequisites
+
+- Python 3.9 or higher
+- A Groq API key (get one at https://console.groq.com/keys)
+- A Pinecone API key (get one at https://app.pinecone.io/)
+
+### Running the App Locally
+
+1. **Activate the virtual environment:**
+
+   ```bash
+   source venv/bin/activate  # macOS/Linux
+   # or
+   venv\Scripts\activate  # Windows
+   ```
+
+2. **Install/update dependencies:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   **Note:** If you encounter a dependency conflict with `pinecone-plugin-inference`, the requirements.txt has been updated to fix this. Make sure to reinstall:
+
+   ```bash
+   pip install --upgrade -r requirements.txt
+   ```
+
+3. **Configure API keys:**
+
+   Create or edit `.streamlit/secrets.toml`:
+
+   ```toml
+   GROQ_API_KEY = "your_groq_api_key_here"
+   PINECONE_API_KEY = "your_pinecone_api_key_here"
+   ```
+
+4. **Run the Streamlit app:**
+
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+
+   The app will open in your browser at `http://localhost:8501`
+
+### Troubleshooting
+
+- **Dependency conflicts:** If you see errors about `pinecone-plugin-inference`, run `pip install --upgrade -r requirements.txt` to ensure compatible versions are installed.
+- **API key errors:** Make sure your `.streamlit/secrets.toml` file is in the correct location and contains valid API keys.
+- **Port already in use:** Use `streamlit run streamlit_app.py --server.port 8502` to use a different port.
 
 ## ToDos
 

@@ -7,26 +7,153 @@ import plotly.graph_objects as go
 from datetime import datetime
 import yfinance as yf
 from groq import Groq
+import time
+import json
+import requests
+from requests.exceptions import HTTPError
 
 # Set Streamlit page configuration
 st.set_page_config(layout="wide", page_title="Stock Analysis", page_icon="📈")
 
-def fetch_stock_data(ticker):
-    stock = yf.Ticker(ticker)
-    info = stock.info
-    return {
-        "name": info.get("shortName", "N/A"),
-        "summary": info.get("longBusinessSummary", "N/A"),
-        "sector": info.get("sector", "N/A"),
-        "industry": info.get("industry", "N/A"),
-        "market_cap": info.get("marketCap", "N/A"),
-        "price": info.get("currentPrice", "N/A"),
-        "revenue_growth": info.get("revenueGrowth", "N/A"),
-        "recommendation": info.get("recommendationKey", "N/A"),
-        "country": info.get("country", "N/A"),
-        "beta": info.get("beta", "N/A"),
-        "dividend_yield": info.get("dividendYield", "N/A")
-    }
+def fetch_stock_data(ticker, max_retries=3):
+    """
+    Fetch stock data with retry logic to handle JSON decode errors, rate limiting (429), and other API issues.
+    """
+    for attempt in range(max_retries):
+        try:
+            stock = yf.Ticker(ticker)
+            # Add a longer delay to avoid rate limiting (Yahoo Finance is strict)
+            time.sleep(1.5)
+            info = stock.info
+            
+            # Validate that we got some data
+            if not info or len(info) == 0:
+                raise ValueError("Empty info dictionary returned")
+            
+            return {
+                "name": info.get("shortName", ticker),
+                "summary": info.get("longBusinessSummary", "Data unavailable"),
+                "sector": info.get("sector", "N/A"),
+                "industry": info.get("industry", "N/A"),
+                "market_cap": info.get("marketCap", "N/A"),
+                "price": info.get("currentPrice", info.get("regularMarketPrice", "N/A")),
+                "revenue_growth": info.get("revenueGrowth", "N/A"),
+                "recommendation": info.get("recommendationKey", "N/A"),
+                "country": info.get("country", "N/A"),
+                "beta": info.get("beta", "N/A"),
+                "dividend_yield": info.get("dividendYield", "N/A")
+            }
+        except (json.JSONDecodeError, KeyError, ValueError, AttributeError) as e:
+            if attempt < max_retries - 1:
+                # Longer wait for rate limiting issues
+                wait_time = (2 ** attempt) * 3  # Exponential backoff: 3, 6, 12 seconds
+                time.sleep(wait_time)
+                continue
+            else:
+                # Return default data structure on final failure
+                st.warning(f"⚠️ Could not fetch complete data for {ticker}. Using default values.")
+                return {
+                    "name": ticker,
+                    "summary": "Data unavailable - API error",
+                    "sector": "N/A",
+                    "industry": "N/A",
+                    "market_cap": "N/A",
+                    "price": "N/A",
+                    "revenue_growth": "N/A",
+                    "recommendation": "N/A",
+                    "country": "N/A",
+                    "beta": "N/A",
+                    "dividend_yield": "N/A"
+                }
+        except HTTPError as e:
+            # Handle 429 Too Many Requests specifically
+            if e.response and e.response.status_code == 429:
+                if attempt < max_retries - 1:
+                    # Much longer wait for rate limiting (429 errors)
+                    wait_time = (2 ** attempt) * 10  # Exponential backoff: 10, 20, 40 seconds
+                    st.info(f"⏳ Rate limited for {ticker}. Waiting {wait_time} seconds before retry...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    st.warning(f"⚠️ Rate limited for {ticker} after {max_retries} attempts. Using default values.")
+                    return {
+                        "name": ticker,
+                        "summary": "Data unavailable - Rate limited",
+                        "sector": "N/A",
+                        "industry": "N/A",
+                        "market_cap": "N/A",
+                        "price": "N/A",
+                        "revenue_growth": "N/A",
+                        "recommendation": "N/A",
+                        "country": "N/A",
+                        "beta": "N/A",
+                        "dividend_yield": "N/A"
+                    }
+            else:
+                # Other HTTP errors
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) * 3
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    st.warning(f"⚠️ HTTP error for {ticker}: {str(e)[:100]}")
+                    return {
+                        "name": ticker,
+                        "summary": "Data unavailable - HTTP error",
+                        "sector": "N/A",
+                        "industry": "N/A",
+                        "market_cap": "N/A",
+                        "price": "N/A",
+                        "revenue_growth": "N/A",
+                        "recommendation": "N/A",
+                        "country": "N/A",
+                        "beta": "N/A",
+                        "dividend_yield": "N/A"
+                    }
+        except Exception as e:
+            error_str = str(e)
+            # Check if it's a 429 error in the error message
+            if "429" in error_str or "Too Many Requests" in error_str:
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) * 10  # Longer wait for rate limiting
+                    st.info(f"⏳ Rate limited for {ticker}. Waiting {wait_time} seconds before retry...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    st.warning(f"⚠️ Rate limited for {ticker} after {max_retries} attempts. Using default values.")
+                    return {
+                        "name": ticker,
+                        "summary": "Data unavailable - Rate limited",
+                        "sector": "N/A",
+                        "industry": "N/A",
+                        "market_cap": "N/A",
+                        "price": "N/A",
+                        "revenue_growth": "N/A",
+                        "recommendation": "N/A",
+                        "country": "N/A",
+                        "beta": "N/A",
+                        "dividend_yield": "N/A"
+                    }
+            else:
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) * 3
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    st.warning(f"⚠️ Error fetching data for {ticker}: {str(e)[:100]}")
+                    return {
+                        "name": ticker,
+                        "summary": "Data unavailable - Error occurred",
+                        "sector": "N/A",
+                        "industry": "N/A",
+                        "market_cap": "N/A",
+                        "price": "N/A",
+                        "revenue_growth": "N/A",
+                        "recommendation": "N/A",
+                        "country": "N/A",
+                        "beta": "N/A",
+                        "dividend_yield": "N/A"
+                    }
 
 def format_large_number(num):
     if num == "N/A":
@@ -195,20 +322,31 @@ if st.button("🚀 Find Tickers", type="primary"):
         ticker_list = [item['id'] for item in search_results['matches']]
 
         stock_data = []
-        for ticker in ticker_list:
+        successful_tickers = []
+        for i, ticker in enumerate(ticker_list):
+            # Add delay between tickers to avoid rate limiting
+            if i > 0:
+                time.sleep(2.0)  # Wait 2 seconds between each ticker request
             data = fetch_stock_data(ticker)
             if data:
                 stock_data.append(data)
+                successful_tickers.append(ticker)
 
+        # Check if we have any successful data fetches
+        if len(stock_data) == 0:
+            st.error("❌ Could not fetch data for any of the selected tickers. Please try again later.")
+            st.stop()
+
+        # Display stock cards
         for i in range(0, len(stock_data), 2):
             col1, col2 = st.columns(2)
 
             with col1:
-                display_stock_card(stock_data[i], ticker_list[i])
+                display_stock_card(stock_data[i], successful_tickers[i])
 
             if i + 1 < len(stock_data):
                 with col2:
-                    display_stock_card(stock_data[i+1], ticker_list[i+1])
+                    display_stock_card(stock_data[i+1], successful_tickers[i+1])
 
         # Display sector distribution
         if len(stock_data) > 0:
@@ -216,36 +354,60 @@ if st.button("🚀 Find Tickers", type="primary"):
 
         # Display market cap comparison
         if len(stock_data) > 0:
-            display_market_cap_comparison(stock_data, ticker_list)
+            display_market_cap_comparison(stock_data, successful_tickers)
 
         # Create comparison chart
         if len(stock_data) > 0:
             st.subheader("Stock Price Comparison")
             fig = go.Figure()
 
-            for i, ticker in enumerate(ticker_list):
-                stock = yf.Ticker(ticker)
-                hist_data = stock.history(period="1y")
+            chart_tickers = []
+            for ticker in successful_tickers:
+                try:
+                    stock = yf.Ticker(ticker)
+                    time.sleep(2.0)  # Longer delay to avoid rate limiting
+                    hist_data = stock.history(period="1y")
+                    
+                    # Check if we got valid data
+                    if hist_data.empty or len(hist_data) == 0:
+                        st.warning(f"⚠️ No historical data available for {ticker}")
+                        continue
+                    
+                    # Normalize the prices to percentage change
+                    hist_data['Normalized'] = (hist_data['Close'] / hist_data['Close'].iloc[0] - 1) * 100
 
-                # Normalize the prices to percentage change
-                hist_data['Normalized'] = (hist_data['Close'] / hist_data['Close'].iloc[0] - 1) * 100
+                    fig.add_trace(go.Scatter(
+                        x=hist_data.index,
+                        y=hist_data['Normalized'],
+                        name=f"{ticker}",
+                        mode='lines'
+                    ))
+                    chart_tickers.append(ticker)
+                except HTTPError as e:
+                    if e.response and e.response.status_code == 429:
+                        st.warning(f"⚠️ Rate limited when fetching historical data for {ticker}. Skipping...")
+                    else:
+                        st.warning(f"⚠️ HTTP error fetching historical data for {ticker}: {str(e)[:100]}")
+                    continue
+                except Exception as e:
+                    error_str = str(e)
+                    if "429" in error_str or "Too Many Requests" in error_str:
+                        st.warning(f"⚠️ Rate limited when fetching historical data for {ticker}. Skipping...")
+                    else:
+                        st.warning(f"⚠️ Could not fetch historical data for {ticker}: {str(e)[:100]}")
+                    continue
 
-                fig.add_trace(go.Scatter(
-                    x=hist_data.index,
-                    y=hist_data['Normalized'],
-                    name=f"{ticker}",
-                    mode='lines'
-                ))
-
-            fig.update_layout(
-                title="1-Year Price Performance Comparison (%)",
-                yaxis_title="Price Change (%)",
-                template="plotly_dark",
-                height=500,
-                showlegend=True
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
+            if chart_tickers:
+                fig.update_layout(
+                    title="1-Year Price Performance Comparison (%)",
+                    yaxis_title="Price Change (%)",
+                    template="plotly_dark",
+                    height=500,
+                    showlegend=True
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No historical data available for any of the selected tickers.")
 
         # Add AI Analysis section
         st.subheader("🤖 AI Analysis")
@@ -253,7 +415,7 @@ if st.button("🚀 Find Tickers", type="primary"):
             # Prepare the context for the AI
             context = "Analyze these stocks:\n\n"
             for i, data in enumerate(stock_data):
-                context += f"{i+1}. {data['name']} ({ticker_list[i]})\n"
+                context += f"{i+1}. {data['name']} ({successful_tickers[i]})\n"
                 context += f"   Sector: {data['sector']}\n"
                 context += f"   Industry: {data['industry']}\n"
                 context += f"   Market Cap: {format_large_number(data['market_cap'])}\n"
@@ -295,7 +457,7 @@ Keep the analysis very short and focused on the most important insights."""
             
             with col1:
                 display_country_distribution(stock_data)
-                display_beta_comparison(stock_data, ticker_list)
+                display_beta_comparison(stock_data, successful_tickers)
             
             with col2:
-                display_dividend_yield_comparison(stock_data, ticker_list)
+                display_dividend_yield_comparison(stock_data, successful_tickers)

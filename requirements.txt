@@ -58,7 +58,8 @@ packaging==24.2
 pandas==2.2.3
 peewee==3.17.8
 pillow==11.0.0
-pinecone==5.4.1
+pinecone-client==5.0.1
+pinecone-plugin-inference>=1.0.3,<2.0.0
 platformdirs==4.3.6
 plotly==5.24.1
 propcache==0.2.1
@@ -104,4 +105,4 @@ tzdata==2024.2
 urllib3==2.2.3
 webencodings==0.5.1
 yarl==1.18.3
-yfinance==0.2.50
+yfinance>=0.2.50
