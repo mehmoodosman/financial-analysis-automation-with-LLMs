@@ -19,56 +19,9 @@ Streamlit application leveraging large language models (LLMs) to automate financ
 
 ## Local Setup
 
-### Prerequisites
-
-- Python 3.9 or higher
-- A Groq API key (get one at https://console.groq.com/keys)
-- A Pinecone API key (get one at https://app.pinecone.io/)
-
-### Running the App Locally
-
-1. **Activate the virtual environment:**
-
-   ```bash
-   source venv/bin/activate  # macOS/Linux
-   # or
-   venv\Scripts\activate  # Windows
-   ```
-
-2. **Install/update dependencies:**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   **Note:** If you encounter a dependency conflict with `pinecone-plugin-inference`, the requirements.txt has been updated to fix this. Make sure to reinstall:
-
-   ```bash
-   pip install --upgrade -r requirements.txt
-   ```
-
-3. **Configure API keys:**
-
-   Create or edit `.streamlit/secrets.toml`:
-
-   ```toml
-   GROQ_API_KEY = "your_groq_api_key_here"
-   PINECONE_API_KEY = "your_pinecone_api_key_here"
-   ```
-
-4. **Run the Streamlit app:**
-
-   ```bash
-   streamlit run streamlit_app.py
-   ```
-
-   The app will open in your browser at `http://localhost:8501`
-
-### Troubleshooting
-
-- **Dependency conflicts:** If you see errors about `pinecone-plugin-inference`, run `pip install --upgrade -r requirements.txt` to ensure compatible versions are installed.
-- **API key errors:** Make sure your `.streamlit/secrets.toml` file is in the correct location and contains valid API keys.
-- **Port already in use:** Use `streamlit run streamlit_app.py --server.port 8502` to use a different port.
+- 'source venv/bin/activate'
+- 'pip install -r requirements.txt
+- 'streamlit run streamlit_app.py'
 
 ## ToDos
 
